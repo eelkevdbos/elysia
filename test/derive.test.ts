@@ -27,6 +27,26 @@ describe('derive', () => {
 		expect(res).toBe('hi')
 	})
 
+	it('inherits plugin hierarchy', async () => {
+		const parent = new Elysia({ name: 'parent' }).derive(() => ({
+			bye: () => 'bye'
+		}))
+
+		const child = new Elysia({ name: 'child' })
+			.use(parent)
+			.derive(({ bye }) => ({
+				hi: () => `hi + ${bye()}`
+			}))
+
+		const app = new Elysia()
+			.use(parent)
+			.use(child)
+			.get('/', ({ hi }) => hi())
+
+		const res = await app.handle(req('/')).then((t) => t.text())
+		expect(res).toBe('hi + bye')
+	})
+
 	it('can mutate store', async () => {
 		const app = new Elysia()
 			.state('counter', 1)
